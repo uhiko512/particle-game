@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Particle Game</title>
+	<!--script type="text/javascript" src="jquery-1.11.0.js"></script-->
+	<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+	<script type="text/javascript">
+		var canvas, context;
+		var gravity;		
+		var particle = [], field;
+		
+		/**---[ Object ]---------*/
+		function Particle(pageX, pageY) {
+			this.positionX = pageX;
+			this.positionY = pageY;
+			this.velocityX = Particle.velocityZero * Math.cos(Particle.angleRange());
+			this.velocityY = Particle.velocityZero * Math.sin(Particle.angleRange());
+			this.life = Particle.lifeCycle;
+			this.color = Particle.palette[Particle.randColor()];		
+		}
+		Particle.velocityZero = 5;
+		Particle.lifeCycle = 1000;
+		Particle.palette = ['rgba(255,102,102,', 'rgba(103,74,139,', 'rgba(33,133,197,'];
+		Particle.size = 3;
+		Particle.angleRange = function() {
+			return ((Math.random() * 60) - 115) * Math.PI / 180;
+		}
+		Particle.randColor = function() {
+			return Math.round(Math.random() * Particle.palette.length);
+		}
+		
+		function Field(pageX, pageY) {
+			this.positionX = pageX;
+			this.positionY = pageY;
+		}
+		Field.switch = false;
+		Field.range = 500;
+		Field.gravity = 0.5;
+		Field.palette = ['#B9FF68', '#191919', '#34AB29'];		
+		Field.attrSerial = {
+			unit: 3,
+			size: [16, 15, 7],
+			color: [2, 1, 0]
+		}
+		
+		/**---[ Init ]---------*/
+		function init() {
+			$('body').append('<canvas id="jsCanvas"></canvas>').css('background-color', '#29241f');
+			canvas = document.getElementById("jsCanvas");
+			canvas.width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth;
+			canvas.height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight;
+			context = canvas.getContext("2d");
+					
+			gravity = 0.1;					
+		}
+		
+		/**---[ Draw ]---------*/
+		function draw() {
+			//--- Background -----
+			context.fillStyle = '#29241f';			
+			context.fillRect(0, 0, canvas.width, canvas.height);
+			
+			//--- Field -----
+			if (Field.switch) {
+				for (var i = 0; i< Field.attrSerial.unit; i++) {
+					var color = Field.attrSerial.color[i],
+						size = Field.attrSerial.size[i];
+					
+					context.beginPath();
+					context.fillStyle = Field.palette[color];				
+					context.arc(field.positionX, field.positionY, size, 0, Math.PI * 2, true);
+					context.closePath();
+					context.fill();
+				}				
+			}
+			
+			//--- Particle -----
+			for (var i in particle) {				
+				context.beginPath();
+				context.fillStyle = particle[i].color + particle[i].life / Particle.lifeCycle + ')';
+				context.arc(particle[i].positionX, particle[i].positionY, Particle.size, 0, Math.PI * 2, true);
+				context.closePath();
+				context.fill();
+			}
+			
+		}
+		
+		/**---[ Update ]---------*/
+		function update() {		
+			for (var i in particle) {
+				particle[i].positionX += particle[i].velocityX;
+				particle[i].velocityY += gravity;
+				particle[i].positionY += particle[i].velocityY;
+				particle[i].life--;
+				
+				//--- Kill -----
+				if (particle[i].life < 0) {				
+					particle.pop();
+					continue;
+				}
+				
+				//--- Collision -----
+				if (particle[i].positionY >= canvas.height) {
+					particle[i].velocityY *= -0.8;
+				}
+				if (particle[i].positionX >= canvas.width || particle[i].positionX <= 0) {
+					particle[i].velocityX *= -0.8;
+				}
+				
+				//--- Field -----			
+				if (Field.switch) {				
+					var distance = Math.sqrt(Math.pow(particle[i].positionX - field.positionX, 2) + Math.pow(particle[i].positionY - field.positionY, 2));
+					var interceptX = particle[i].positionX - field.positionX,
+						interceptY = particle[i].positionY - field.positionY;
+					
+					if(distance <= Field.range) {					
+						particle[i].velocityX -= Field.gravity * (distance / Field.range) * (interceptX / Field.range);
+						particle[i].velocityY -= Field.gravity * (distance / Field.range) * (interceptY / Field.range);					
+					}			
+				}
+			}
+		}
+		
+		/**---[ AddParticle ]---------*/
+		function add(event) {
+			for (var i = 0; i < 2; i++) {			
+				particle.unshift(new Particle(event.pageX, event.pageY));
+			}
+		}
+	
+		/**---[ Main ]---------*/
+		$(document).ready(function(){					
+			init();
+			
+			$(document).mousemove(function(event){
+				add(event);				
+			});
+			
+			$(document).mousedown(function(event){
+				if (Field.switch) {
+					Field.switch = false;
+					delete field;				
+				} else {					
+					Field.switch = true;
+					field = new Field(event.pageX, event.pageY);				
+				}				
+			});
+			
+			//--- ThreadLoop -----
+			setInterval(draw, 1000 / 60);
+			setInterval(update, 5);
+		});
+	</script>
+</head>
+<body>	
+</body>
+</html>
