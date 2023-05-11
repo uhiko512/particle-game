@@ -2,9 +2,23 @@
 <html>
 <head>
 	<title>Particle Game</title>
-	<!--script type="text/javascript" src="jquery-1.11.0.js"></script-->
-	<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-	<script type="text/javascript">
+	<style type="text/css">
+		#jsCanvas, html, body {
+		  position: absolute;
+		  display: flex;
+		  width: 100%;
+		  height: 100%;
+		}
+
+		body {
+		  margin: 0;
+		}
+
+		#jsCanvas {
+			background-color: #29241f;
+		}
+	</style>
+	<script>
 		var canvas, context;
 		var gravity;		
 		var particle = [], field;
@@ -45,8 +59,11 @@
 		
 		/**---[ Init ]---------*/
 		function init() {
-			$('body').append('<canvas id="jsCanvas"></canvas>').css('background-color', '#29241f');
-			canvas = document.getElementById("jsCanvas");
+			canvas = document.createElement('canvas');
+			document.body.appendChild(canvas);
+
+			canvas.id = "jsCanvas";
+			canvas.style.backgroundColor = '#29241f';
 			canvas.width = window.innerWidth ? window.innerWidth : document.documentElement.clientWidth;
 			canvas.height = window.innerHeight ? window.innerHeight : document.documentElement.clientHeight;
 			context = canvas.getContext("2d");
@@ -129,14 +146,14 @@
 		}
 	
 		/**---[ Main ]---------*/
-		$(document).ready(function(){					
+		window.onload = function(){					
 			init();
 			
-			$(document).mousemove(function(event){
-				add(event);				
-			});
+			canvas.onmousemove = function(event){
+				add(event);
+			};
 			
-			$(document).mousedown(function(event){
+			canvas.onmousedown = function(event) {
 				if (Field.switch) {
 					Field.switch = false;
 					delete field;				
@@ -144,12 +161,12 @@
 					Field.switch = true;
 					field = new Field(event.pageX, event.pageY);				
 				}				
-			});
+			};
 			
 			//--- ThreadLoop -----
 			setInterval(draw, 1000 / 60);
 			setInterval(update, 5);
-		});
+		}
 	</script>
 </head>
 <body>	
